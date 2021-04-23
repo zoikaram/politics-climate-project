@@ -1,3 +1,4 @@
+# coding: utf-8 
 # Data_clean_up.py
 # This script processes the data into an output file which contains the cleaned up form of the data.
 
@@ -8,6 +9,7 @@ from spacy.lang.en.stop_words import STOP_WORDS
 import spacy
 import re
 import threading
+from datetime import datetime
 
 # Defining methods for clean up of data
 def alphanumeric(word):
@@ -39,12 +41,17 @@ def document_cleaner(data, file):
     for word in nlp(file.read()):
         if(is_valid_word(word.text)):
             data.append(word.lemma_)
-
+    
 def folder_cleaner(data, files):
     for j in range(len(files)):
-        file = open(files[j], "r")
-        document_cleaner(data, file)
+        file = open(files[j], "r", encoding="utf8")
+        fileData = []
+        document_cleaner(fileData, file)
+        data.append(fileData)
 
+print("start run:")
+startTime = datetime.now().time()
+print(startTime)
 
 nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
 nlp.max_length = 1500000
@@ -56,12 +63,12 @@ files = [] # this list contains all the path names (relative to the working dire
 for i in range(len(folders)):
     files.append(glob.glob(folders[i]+"/*.txt"))
 
-print("Reading the data in the files to memory")    
+print("Reading the data in the files to memory") 
 threads = [] # this list holds all the threads used to compute the cleaned up data
 data = [] # this list contains the cleaned up data
 for i in range(len(folders)): # for each folder we
-    data.append([]) # 1: create a new list within the data list
-    thread = threading.Thread(target=folder_cleaner, args=(data[i], files[i])) # 2: create a thread that reads the data of every file in that folder, cleans it up and stores it in the data list
+    #data.append([]) # 1: create a new list within the data list
+    thread = threading.Thread(target=folder_cleaner, args=(data, files[i])) # 2: create a thread that reads the data of every file in that folder, cleans it up and stores it in the data list
     threads.append(thread) # 3: Store the thread object in a list so it does not get overwritten
     thread.start() # 4: start the thread object
 
@@ -92,7 +99,9 @@ for i in range(len(data)):
         outputFile.write("\n")
     outputFile.close()
 
-
+print("end run:")
+endTime = startTime = datetime.now().time()
+print(endTime)
 
 
 

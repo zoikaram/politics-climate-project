@@ -9,7 +9,14 @@ Created on Wed Apr 21 14:22:41 2021
 import glob
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import LdaMulticore
+from gensim.test.utils import datapath
+from datetime import datetime
+import os
+from collections import Counter
 
+print("start run:")
+startTime = datetime.now().time()
+print(startTime)
 # Reading data 
 files = glob.glob("./clean_data/*")
 data = []
@@ -19,23 +26,48 @@ for i in range(len(files)):
     for line in file.readlines():
         data[i].append(line.rstrip()) # rstrip removes the newline char
     file.close()
+usedData = data[1:-1]
+#### tryout
+concatdata = []
+for doc in usedData:
+    for word in doc:
+        concatdata.append(word)
+topWords = []
+for word in Counter(concatdata).most_common(5000):
+    topWords.append(word[0])
+truncatedUsedData = []
+for i in range(len(usedData)):
+    truncatedUsedData.append([])
+    for word in usedData[i]:
+        if word in topWords:
+            truncatedUsedData[i].append(word)
+#### end tryout
 
-dictionary = Dictionary(data) 
-corpus = [dictionary.doc2bow(text) for text in data]
+dictionary = Dictionary(truncatedUsedData) 
+corpus = [dictionary.doc2bow(text) for text in truncatedUsedData]
+if __name__ == '__main__':
+    lda = LdaMulticore(corpus, id2word=dictionary, num_topics=20, 
+                                        chunksize=100,
+                                        passes=10,
+                                        iterations=150,
+                                        alpha = 0.01)
 
-lda = LdaMulticore(corpus, id2word=dictionary, num_topics=10, workers=11)
-# dataframe = pd.DataFrame(data).transpose()
-# for i in range(len(dataframe.columns)):
-#     dataframe[i] = dataframe[i].value_counts().head(4000)
+    # saving model to disk
+    saveFolder = os.getcwd()+"/lda_files"
+    try:
+        for root, dirs, files in os.walk(saveFolder):
+            for file in files:
+                try:
+                    os.remove(os.path.join(root, file))
+                except:
+                    print(file+": no such file")
+            os.rmdir(root)
+        os.mkdir(saveFolder)
+    except:
+        print("save folder creation failed")    
+    ldaSave = datapath(saveFolder+"/lda_model")
+    lda.save(ldaSave)
 
-            
-# topData = []
-# threads = []
-# for i in range(len(data)):
-#     topData.append([])
-#     thread = threading.Thread(target=keep_top_words, args=(data[i], topData[i], dataframe['vocab'].values)) 
-#     threads.append(thread) # Store the thread object in a list so it does not get overwritten
-#     thread.start() # start the thread object
-
-# for thread in threads: # Once a thread finished it joins the workflow of the script again at this point
-#     thread.join()
+    print("end run:")
+    endTime = startTime = datetime.now().time()
+    print(endTime)
