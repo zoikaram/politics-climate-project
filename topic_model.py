@@ -12,7 +12,6 @@ from gensim.models import LdaMulticore
 from gensim.test.utils import datapath
 from datetime import datetime
 import os
-from collections import Counter
 
 print("start run:")
 startTime = datetime.now().time()
@@ -26,31 +25,28 @@ for i in range(len(files)):
     for line in file.readlines():
         data[i].append(line.rstrip()) # rstrip removes the newline char
     file.close()
-usedData = data[1:-1]
-#### tryout
-concatdata = []
-for doc in usedData:
-    for word in doc:
-        concatdata.append(word)
-topWords = []
-for word in Counter(concatdata).most_common(5000):
-    topWords.append(word[0])
-truncatedUsedData = []
-for i in range(len(usedData)):
-    truncatedUsedData.append([])
-    for word in usedData[i]:
-        if word in topWords:
-            truncatedUsedData[i].append(word)
-#### end tryout
+usedData = []
 
-dictionary = Dictionary(truncatedUsedData) 
-corpus = [dictionary.doc2bow(text) for text in truncatedUsedData]
+dictionary = Dictionary(data) 
+corpus = [dictionary.doc2bow(text) for text in data]
 if __name__ == '__main__':
-    lda = LdaMulticore(corpus, id2word=dictionary, num_topics=20, 
-                                        chunksize=100,
-                                        passes=10,
-                                        iterations=150,
-                                        alpha = 0.01)
+    lda = LdaMulticore(corpus, id2word=dictionary, num_topics=15, 
+                                        chunksize=500,
+                                        update_every=1,
+                                        passes=500,
+                                        iterations=5000,
+                                        alpha = 'asymmetric',
+                                        eta=0.0001,
+                                        random_state = 100
+                                        )
+    # best model so far
+    # lda = LdaMulticore(corpus, id2word=dictionary, num_topics=15, 
+    #                                     chunksize=5,
+    #                                     passes=500,
+    #                                     iterations=5000,
+    #                                     alpha = 'asymmetric',
+                                        
+    #                                     )
 
     # saving model to disk
     saveFolder = os.getcwd()+"/lda_files"

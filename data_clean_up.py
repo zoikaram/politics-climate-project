@@ -10,6 +10,7 @@ import spacy
 import re
 import threading
 from datetime import datetime
+from collections import Counter
 
 # Defining methods for clean up of data
 def alphanumeric(word):
@@ -21,7 +22,7 @@ def contains_non_ascii(s):
 def is_valid_word(word, stop_words=STOP_WORDS):
     """Checks if the word is valid for training or inference"""
 
-    if stop_words and word in stop_words:
+    if word in stop_words:
         return False
 
     if contains_non_ascii(word):
@@ -74,7 +75,21 @@ for i in range(len(folders)): # for each folder we
 
 for thread in threads: # Once a thread finished it joins the workflow of the script again at this point
     thread.join()
-        
+#### tryout
+concatdata = []
+for doc in data:
+    for word in doc:
+        concatdata.append(word)
+topWords = []
+for word in Counter(concatdata).most_common(5000):
+    topWords.append(word[0])
+truncatedUsedData = []
+for i in range(len(data)):
+    truncatedUsedData.append([])
+    for word in data[i]:
+        if word in topWords:
+            truncatedUsedData[i].append(word)
+#### end tryout        
 
 
 print("Cleanup complete")
@@ -92,9 +107,9 @@ try:
 except FileExistsError:
     print("folder allready exists")
     
-for i in range(len(data)):
+for i in range(len(truncatedUsedData)):
     outputFile = open(outputFolder+"/clean_data_"+str(i), "w")
-    for word in data[i]:
+    for word in truncatedUsedData[i]:
         outputFile.write(word)
         outputFile.write("\n")
     outputFile.close()

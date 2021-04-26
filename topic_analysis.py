@@ -28,4 +28,4 @@ for i in range(len(fileName)):
 
 dictionary = Dictionary(data) 
 corpus = [dictionary.doc2bow(text) for text in data]
-vector = lda[corpus[1]]
+vector = lda[corpus[3]]
